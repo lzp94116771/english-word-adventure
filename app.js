@@ -796,10 +796,10 @@ async function teachRead(item) {
   setFeedback("success", "声音教读", `先听单词，再听字母拼写：${item.word}`);
 
   const voices = await waitForVoices();
-  const letters = normalizeLetters(item.word).join(" ");
+  const letters = normalizeLetters(item.word).join(", ");
   const lines = [
     { text: item.word, lang: "en-US", rate: 0.56 },
-    { text: letters, lang: "en-US", rate: 0.62 },
+    { text: letters, lang: "en-US", rate: 0.66 },
   ];
 
   const utterances = lines.map((line, index) => {
