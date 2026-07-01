@@ -1,4 +1,4 @@
-const CACHE_NAME = "word-adventure-v1";
+const CACHE_NAME = "word-adventure-v2";
 const APP_ASSETS = [
   "./",
   "./index.html",
