@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>英语单词大闯关</title>
+    <meta name="theme-color" content="#287c68" />
+    <meta name="description" content="英语单词大闯关，适合平板安装使用的单词闯关游戏。" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>英语单词大闯关</h1>
+        </div>
+        <div class="star-card" aria-label="星星数量">
+          <span id="starCount" class="star-value">0</span>
+          <span class="star-label">小星星</span>
+        </div>
+      </header>
+
+      <section class="status-strip" aria-label="游戏状态">
+        <div>
+          <span>第几题</span>
+          <strong id="roundLabel">1 / 10</strong>
+        </div>
+        <div>
+          <span>连对</span>
+          <strong id="streakLabel">0</strong>
+        </div>
+        <div>
+          <span>模式</span>
+          <strong id="modeLabel">看图选词</strong>
+        </div>
+      </section>
+
+      <section class="theme-panel" aria-labelledby="themeTitle">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">选择主题</p>
+            <h2 id="themeTitle">入门单词</h2>
+          </div>
+          <button id="soundButton" class="sound-button" type="button">听单词</button>
+        </div>
+        <div id="themeTabs" class="theme-tabs" role="tablist" aria-label="单词主题"></div>
+      </section>
+
+      <section class="game-panel" aria-label="单词游戏">
+        <div class="prompt-card">
+          <div id="picture" class="picture" aria-hidden="true">🍎</div>
+          <div>
+            <p class="prompt-kicker">找一找这个单词</p>
+            <h2 id="chinesePrompt">苹果</h2>
+            <p id="helperText">听一听，再点正确的英文。</p>
+          </div>
+        </div>
+
+        <div id="choiceGrid" class="choice-grid" aria-label="单词选项"></div>
+
+        <div id="letterGame" class="letter-game" aria-label="字母拼一拼">
+          <p class="prompt-kicker">答对后再点字母拼一拼</p>
+          <div id="letterSlots" class="letter-slots"></div>
+          <div id="letterBank" class="letter-bank"></div>
+          <button id="repeatButton" class="repeat-button" type="button" disabled>拼完后声音教读</button>
+        </div>
+
+        <div id="feedbackBox" class="feedback-box" aria-live="polite">
+          <strong id="feedbackTitle">准备好了吗？</strong>
+          <p id="feedbackText">看大图，点正确的英文单词。</p>
+        </div>
+
+        <div class="action-row">
+          <button id="skipButton" class="secondary-button" type="button">换一个</button>
+          <button id="nextButton" class="primary-button" type="button" disabled>下一题</button>
+        </div>
+      </section>
+
+      <aside class="progress-panel" aria-label="单词进度">
+        <p class="eyebrow">今天认识</p>
+        <h2 id="learnedCount">0 个单词</h2>
+        <div id="wordShelf" class="word-shelf"></div>
+        <button id="restartButton" class="wide-button" type="button">重新开始</button>
+      </aside>
+    </main>
+
+    <div id="finishModal" class="modal-backdrop" aria-hidden="true">
+      <section class="finish-modal" role="dialog" aria-modal="true" aria-labelledby="finishTitle">
+        <button id="closeFinish" class="icon-button" type="button" aria-label="关闭">×</button>
+        <p class="eyebrow">游戏完成</p>
+        <h2 id="finishTitle">真棒！</h2>
+        <div class="finish-picture" aria-hidden="true">⭐</div>
+        <p id="finishText"></p>
+        <button id="playAgainButton" class="wide-button" type="button">再玩一轮</button>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("sw.js");
+        });
+      }
+    </script>
+  </body>
+</html>
