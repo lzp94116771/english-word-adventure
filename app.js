@@ -620,6 +620,19 @@ const els = {
   closeFinish: document.querySelector("#closeFinish"),
   finishText: document.querySelector("#finishText"),
   playAgainButton: document.querySelector("#playAgainButton"),
+  settingsButton: document.querySelector("#settingsButton"),
+  settingsModal: document.querySelector("#settingsModal"),
+  closeSettings: document.querySelector("#closeSettings"),
+  fontScaleInput: document.querySelector("#fontScaleInput"),
+  fontScaleValue: document.querySelector("#fontScaleValue"),
+  layoutScaleInput: document.querySelector("#layoutScaleInput"),
+  layoutScaleValue: document.querySelector("#layoutScaleValue"),
+  resetDisplayButton: document.querySelector("#resetDisplayButton"),
+};
+
+const displaySettings = {
+  fontScale: 100,
+  layoutScale: 100,
 };
 
 function currentTheme() {
@@ -632,6 +645,52 @@ function currentWord() {
 
 function shuffle(items) {
   return [...items].sort(() => Math.random() - 0.5);
+}
+
+function loadDisplaySettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("wordAdventureDisplay") || "{}");
+    displaySettings.fontScale = Number(saved.fontScale) || 100;
+    displaySettings.layoutScale = Number(saved.layoutScale) || 100;
+  } catch {
+    displaySettings.fontScale = 100;
+    displaySettings.layoutScale = 100;
+  }
+}
+
+function saveDisplaySettings() {
+  localStorage.setItem("wordAdventureDisplay", JSON.stringify(displaySettings));
+}
+
+function applyDisplaySettings() {
+  const fontScale = Math.min(135, Math.max(85, displaySettings.fontScale));
+  const layoutScale = Math.min(125, Math.max(85, displaySettings.layoutScale));
+
+  displaySettings.fontScale = fontScale;
+  displaySettings.layoutScale = layoutScale;
+  document.documentElement.style.setProperty("--font-scale", String(fontScale / 100));
+  document.documentElement.style.setProperty("--layout-scale", String(layoutScale / 100));
+  els.fontScaleInput.value = String(fontScale);
+  els.layoutScaleInput.value = String(layoutScale);
+  els.fontScaleValue.textContent = `${fontScale}%`;
+  els.layoutScaleValue.textContent = `${layoutScale}%`;
+  saveDisplaySettings();
+}
+
+function showSettings() {
+  els.settingsModal.classList.add("is-open");
+  els.settingsModal.setAttribute("aria-hidden", "false");
+}
+
+function hideSettings() {
+  els.settingsModal.classList.remove("is-open");
+  els.settingsModal.setAttribute("aria-hidden", "true");
+}
+
+function resetDisplaySettings() {
+  displaySettings.fontScale = 100;
+  displaySettings.layoutScale = 100;
+  applyDisplaySettings();
 }
 
 function normalizeLetters(word) {
@@ -1136,12 +1195,31 @@ els.finishModal.addEventListener("click", (event) => {
     hideFinish();
   }
 });
+els.settingsButton.addEventListener("click", showSettings);
+els.closeSettings.addEventListener("click", hideSettings);
+els.settingsModal.addEventListener("click", (event) => {
+  if (event.target === els.settingsModal) {
+    hideSettings();
+  }
+});
+els.fontScaleInput.addEventListener("input", (event) => {
+  displaySettings.fontScale = Number(event.target.value);
+  applyDisplaySettings();
+});
+els.layoutScaleInput.addEventListener("input", (event) => {
+  displaySettings.layoutScale = Number(event.target.value);
+  applyDisplaySettings();
+});
+els.resetDisplayButton.addEventListener("click", resetDisplaySettings);
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     hideFinish();
+    hideSettings();
   }
 });
 
+loadDisplaySettings();
+applyDisplaySettings();
 shuffleAllLevels();
 resetRound();
