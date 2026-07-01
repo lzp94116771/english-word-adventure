@@ -17,9 +17,12 @@
         <div>
           <h1>英语单词大闯关</h1>
         </div>
-        <div class="star-card" aria-label="星星数量">
-          <span id="starCount" class="star-value">0</span>
-          <span class="star-label">小星星</span>
+        <div class="top-actions">
+          <button id="settingsButton" class="settings-button" type="button">显示设置</button>
+          <div class="star-card" aria-label="星星数量">
+            <span id="starCount" class="star-value">0</span>
+            <span class="star-label">小星星</span>
+          </div>
         </div>
       </header>
 
@@ -95,6 +98,28 @@
         <div class="finish-picture" aria-hidden="true">⭐</div>
         <p id="finishText"></p>
         <button id="playAgainButton" class="wide-button" type="button">再玩一轮</button>
+      </section>
+    </div>
+
+    <div id="settingsModal" class="modal-backdrop" aria-hidden="true">
+      <section class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <button id="closeSettings" class="icon-button" type="button" aria-label="关闭">×</button>
+        <p class="eyebrow">显示设置</p>
+        <h2 id="settingsTitle">调整版面</h2>
+
+        <label class="setting-row" for="fontScaleInput">
+          <span>字体大小</span>
+          <strong id="fontScaleValue">100%</strong>
+        </label>
+        <input id="fontScaleInput" class="setting-slider" type="range" min="85" max="135" step="5" value="100" />
+
+        <label class="setting-row" for="layoutScaleInput">
+          <span>版面大小</span>
+          <strong id="layoutScaleValue">100%</strong>
+        </label>
+        <input id="layoutScaleInput" class="setting-slider" type="range" min="85" max="125" step="5" value="100" />
+
+        <button id="resetDisplayButton" class="wide-button" type="button">恢复默认</button>
       </section>
     </div>
 
