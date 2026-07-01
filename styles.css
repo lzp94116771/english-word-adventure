@@ -15,6 +15,8 @@
   --danger: #d95b58;
   --success: #238a5d;
   --shadow: 0 18px 46px rgba(31, 49, 73, 0.12);
+  --font-scale: 1;
+  --layout-scale: 1;
 }
 
 * {
@@ -40,6 +42,7 @@ body {
     Arial,
     sans-serif;
   letter-spacing: 0;
+  font-size: calc(16px * var(--font-scale));
 }
 
 button {
@@ -48,10 +51,10 @@ button {
 }
 
 .app-shell {
-  width: min(100%, 1040px);
+  width: min(100%, calc(1040px * var(--layout-scale)));
   min-height: 100vh;
   margin: 0 auto;
-  padding: 18px 14px 28px;
+  padding: calc(18px * var(--layout-scale)) calc(14px * var(--layout-scale)) calc(28px * var(--layout-scale));
 }
 
 .topbar,
@@ -59,7 +62,8 @@ button {
 .theme-panel,
 .game-panel,
 .progress-panel,
-.finish-modal {
+.finish-modal,
+.settings-modal {
   border: 1px solid rgba(217, 229, 242, 0.95);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.95);
@@ -72,6 +76,12 @@ button {
   justify-content: space-between;
   gap: 16px;
   padding: 18px;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .eyebrow {
@@ -90,13 +100,13 @@ p {
 
 h1 {
   margin-bottom: 0;
-  font-size: 30px;
+  font-size: calc(30px * var(--font-scale));
   line-height: 1.15;
 }
 
 h2 {
   margin-bottom: 0;
-  font-size: 21px;
+  font-size: calc(21px * var(--font-scale));
   line-height: 1.25;
 }
 
@@ -111,7 +121,7 @@ h2 {
 }
 
 .star-value {
-  font-size: 32px;
+  font-size: calc(32px * var(--font-scale));
   font-weight: 950;
   line-height: 1;
 }
@@ -165,6 +175,7 @@ h2 {
 }
 
 .sound-button,
+.settings-button,
 .theme-tab,
 .choice-card,
 .letter-chip,
@@ -188,6 +199,15 @@ h2 {
   padding: 0 14px;
   background: var(--blue);
   color: #fff;
+}
+
+.settings-button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--primary-dark);
+  white-space: nowrap;
 }
 
 .theme-tabs {
@@ -255,11 +275,11 @@ h2 {
 
 .picture {
   display: grid;
-  min-height: 150px;
+  min-height: calc(150px * var(--layout-scale));
   place-items: center;
   border-radius: 8px;
   background: #fff;
-  font-size: 86px;
+  font-size: calc(86px * var(--font-scale) * var(--layout-scale));
   box-shadow: inset 0 0 0 1px rgba(217, 229, 242, 0.85);
 }
 
@@ -271,7 +291,7 @@ h2 {
 }
 
 #chinesePrompt {
-  font-size: 34px;
+  font-size: calc(34px * var(--font-scale));
 }
 
 #helperText {
@@ -289,11 +309,11 @@ h2 {
 }
 
 .choice-card {
-  min-height: 86px;
+  min-height: calc(86px * var(--layout-scale));
   border: 2px solid var(--line);
   background: #fff;
   color: var(--ink);
-  font-size: 28px;
+  font-size: calc(28px * var(--font-scale));
   text-transform: lowercase;
 }
 
@@ -301,6 +321,7 @@ h2 {
 .theme-tab:not(:disabled):hover,
 .letter-chip:hover,
 .sound-button:hover,
+.settings-button:hover,
 .primary-button:hover,
 .secondary-button:hover,
 .wide-button:hover {
@@ -338,12 +359,12 @@ h2 {
 
 .letter-slot {
   display: grid;
-  width: 42px;
-  height: 48px;
+  width: calc(42px * var(--layout-scale));
+  height: calc(48px * var(--layout-scale));
   place-items: center;
   border-bottom: 4px solid var(--blue);
   color: var(--blue);
-  font-size: 28px;
+  font-size: calc(28px * var(--font-scale));
   font-weight: 950;
 }
 
@@ -357,7 +378,7 @@ h2 {
   margin-top: 14px;
   background: var(--blue);
   color: #fff;
-  font-size: 18px;
+  font-size: calc(18px * var(--font-scale));
 }
 
 .repeat-button:disabled {
@@ -367,11 +388,11 @@ h2 {
 }
 
 .letter-chip {
-  min-width: 46px;
-  min-height: 46px;
+  min-width: calc(46px * var(--layout-scale));
+  min-height: calc(46px * var(--layout-scale));
   background: #fff;
   color: var(--blue);
-  font-size: 24px;
+  font-size: calc(24px * var(--font-scale));
   text-transform: lowercase;
 }
 
@@ -506,6 +527,27 @@ h2 {
   text-align: center;
 }
 
+.settings-modal {
+  position: relative;
+  width: min(100%, 480px);
+  padding: 20px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.setting-slider {
+  width: 100%;
+  margin-top: 10px;
+  accent-color: var(--primary);
+}
+
 .icon-button {
   position: absolute;
   top: 12px;
@@ -605,10 +647,16 @@ h2 {
 @media (max-width: 430px) {
   .topbar {
     align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .star-card {
     min-width: 78px;
+  }
+
+  .top-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .section-heading {
