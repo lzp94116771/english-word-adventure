@@ -838,20 +838,22 @@ function buildChoices(item) {
 }
 
 function renderThemeTabs() {
-  els.themeTabs.innerHTML = themes
-    .map((theme, index) => {
-      const isLocked = index > state.unlockedThemeIndex;
+  const visibleThemes = themes
+    .map((theme, index) => ({ theme, index }))
+    .filter((entry) => entry.index <= state.unlockedThemeIndex);
+
+  els.themeTabs.innerHTML = visibleThemes
+    .map(({ theme, index }) => {
       const isCompleted = state.completedThemes.has(index);
-      const status = isCompleted ? "已通关" : isLocked ? "未解锁" : index === state.themeIndex ? "闯关中" : "可挑战";
+      const status = isCompleted ? "已通关" : index === state.themeIndex ? "闯关中" : "可挑战";
 
       return `
         <button
-          class="theme-tab ${isLocked ? "is-locked" : ""} ${isCompleted ? "is-completed" : ""}"
+          class="theme-tab ${isCompleted ? "is-completed" : ""}"
           type="button"
           role="tab"
           aria-selected="${index === state.themeIndex}"
           data-theme-index="${index}"
-          ${isLocked ? "disabled" : ""}
         >
           <strong>${theme.title}</strong>
           <span>${theme.label} · ${status}</span>
@@ -860,7 +862,6 @@ function renderThemeTabs() {
     })
     .join("");
 }
-
 function renderChoices() {
   const choices = buildChoices(currentWord());
 
