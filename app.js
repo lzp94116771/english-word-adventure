@@ -582,6 +582,8 @@ const state = {
   learned: new Set(),
   unlockedThemeIndex: 0,
   completedThemes: new Set(),
+  letterMistakes: 0,
+  lastWrongSourceIndex: null,
 };
 
 const voiceState = {
@@ -590,6 +592,7 @@ const voiceState = {
   teaching: false,
   teachTimer: null,
   resumeTimer: null,
+  currentAudio: null,
 };
 
 const els = {
@@ -608,6 +611,8 @@ const els = {
   letterSlots: document.querySelector("#letterSlots"),
   letterBank: document.querySelector("#letterBank"),
   repeatButton: document.querySelector("#repeatButton"),
+  hintButton: document.querySelector("#hintButton"),
+  clearLettersButton: document.querySelector("#clearLettersButton"),
   feedbackBox: document.querySelector("#feedbackBox"),
   feedbackTitle: document.querySelector("#feedbackTitle"),
   feedbackText: document.querySelector("#feedbackText"),
@@ -621,6 +626,7 @@ const els = {
   finishText: document.querySelector("#finishText"),
   playAgainButton: document.querySelector("#playAgainButton"),
   settingsButton: document.querySelector("#settingsButton"),
+  voiceTestButton: document.querySelector("#voiceTestButton"),
   settingsModal: document.querySelector("#settingsModal"),
   closeSettings: document.querySelector("#closeSettings"),
   fontScaleInput: document.querySelector("#fontScaleInput"),
@@ -698,7 +704,11 @@ function normalizeLetters(word) {
 }
 
 function speak(text) {
+  voiceState.currentAudio?.pause();
+  voiceState.currentAudio = null;
+
   if (!("speechSynthesis" in window)) {
+    playOnlineTtsSequence([text], () => {}, () => {});
     return;
   }
 
@@ -707,7 +717,11 @@ function speak(text) {
 }
 
 function speakLetter(letter) {
+  voiceState.currentAudio?.pause();
+  voiceState.currentAudio = null;
+
   if (!("speechSynthesis" in window)) {
+    playOnlineTtsSequence([letter.toUpperCase()], () => {}, () => {});
     return;
   }
 
@@ -734,6 +748,61 @@ function waitForVoices() {
   }
 
   return voiceState.voicesReady;
+}
+
+function warmUpVoices() {
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.getVoices();
+    waitForVoices();
+  }
+}
+
+function isInstalledAppMode() {
+  return (
+    window.matchMedia?.("(display-mode: standalone)").matches ||
+    window.matchMedia?.("(display-mode: fullscreen)").matches ||
+    window.navigator.standalone === true
+  );
+}
+
+function onlineTtsUrl(text) {
+  return `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=${encodeURIComponent(text)}`;
+}
+
+function playOnlineTtsSequence(items, onDone, onFail) {
+  let index = 0;
+  let stopped = false;
+
+  const playNext = () => {
+    if (stopped) {
+      return;
+    }
+
+    if (index >= items.length) {
+      voiceState.currentAudio = null;
+      onDone();
+      return;
+    }
+
+    const audio = new Audio(onlineTtsUrl(items[index]));
+    index += 1;
+    voiceState.currentAudio = audio;
+    audio.preload = "auto";
+    audio.volume = 1;
+    audio.onended = () => window.setTimeout(playNext, 220);
+    audio.onerror = () => {
+      stopped = true;
+      voiceState.currentAudio = null;
+      onFail();
+    };
+    audio.play().catch(() => {
+      stopped = true;
+      voiceState.currentAudio = null;
+      onFail();
+    });
+  };
+
+  playNext();
 }
 
 function pickVoice(voices, lang) {
@@ -782,21 +851,39 @@ async function speakLine(text, options = {}) {
 }
 
 async function teachRead(item) {
-  if (!("speechSynthesis" in window)) {
-    setFeedback("error", "没有声音", "当前浏览器不支持声音朗读，可以换 Chrome 或 Edge 打开。");
-    return;
-  }
-
   voiceState.teaching = true;
   window.clearTimeout(voiceState.teachTimer);
   window.clearInterval(voiceState.resumeTimer);
-  window.speechSynthesis.cancel();
+  voiceState.currentAudio?.pause();
+  voiceState.currentAudio = null;
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
   els.repeatButton.disabled = true;
   els.repeatButton.textContent = "正在教读...";
   setFeedback("success", "声音教读", `先听单词，再听字母拼写：${item.word}`);
 
-  const voices = await waitForVoices();
   const letters = normalizeLetters(item.word).join(", ");
+  const letterItems = normalizeLetters(item.word).map((letter) => letter.toUpperCase());
+
+  if (!("speechSynthesis" in window)) {
+    playOnlineTtsSequence(
+      [item.word, ...letterItems],
+      () => finishTeachRead(item),
+      () => {
+        voiceState.teaching = false;
+        window.clearTimeout(voiceState.teachTimer);
+        window.clearInterval(voiceState.resumeTimer);
+        els.repeatButton.disabled = false;
+        els.repeatButton.textContent = `声音教读 ${item.word}`;
+        setFeedback("error", "声音播放失败", "请确认平板已联网、媒体音量已打开，然后再点一次声音教读。");
+        renderGame();
+      },
+    );
+    return;
+  }
+
+  const voices = await waitForVoices();
   const lines = [
     { text: item.word, lang: "en-US", rate: 0.56 },
     { text: letters, lang: "en-US", rate: 0.66 },
@@ -950,7 +1037,7 @@ function renderLetters() {
     .map(
       (entry) => `
         <button
-          class="letter-chip"
+          class="letter-chip ${entry.index === state.lastWrongSourceIndex ? "is-wrong" : ""}"
           type="button"
           data-letter="${entry.letter}"
           data-source-index="${entry.index}"
@@ -1012,6 +1099,12 @@ function renderGame() {
     : state.letterSolved
       ? `声音教读 ${item.word}`
       : "拼完后声音教读";
+  if (els.hintButton) {
+    els.hintButton.disabled = !state.solved || state.letterSolved;
+  }
+  if (els.clearLettersButton) {
+    els.clearLettersButton.disabled = !state.selectedLetters.length || state.letterSolved;
+  }
   els.letterGame.classList.toggle("is-open", state.solved);
 
   renderThemeTabs();
@@ -1055,10 +1148,20 @@ function chooseLetter(letter, sourceIndex) {
   const expected = letters[nextIndex];
 
   if (letter !== expected) {
+    state.letterMistakes += 1;
+    state.lastWrongSourceIndex = sourceIndex;
     setFeedback("error", "字母不对哦", `下一个字母是 ${expected.toUpperCase()}。`);
+    renderGame();
+    window.setTimeout(() => {
+      if (state.lastWrongSourceIndex === sourceIndex) {
+        state.lastWrongSourceIndex = null;
+        renderLetters();
+      }
+    }, 380);
     return;
   }
 
+  state.lastWrongSourceIndex = null;
   state.selectedLetters.push({ letter, sourceIndex });
 
   if (state.selectedLetters.length === letters.length) {
@@ -1069,12 +1172,46 @@ function chooseLetter(letter, sourceIndex) {
   renderGame();
 }
 
+function useLetterHint() {
+  if (!state.solved || state.letterSolved) {
+    return;
+  }
+
+  const item = currentWord();
+  const letters = normalizeLetters(item.word);
+  const nextIndex = state.selectedLetters.length;
+  const expected = letters[nextIndex];
+  const selectedIndexes = new Set(state.selectedLetters.map((entry) => entry.sourceIndex));
+  const hintEntry = state.letterBank.find((entry) => entry.letter === expected && !selectedIndexes.has(entry.index));
+
+  if (!hintEntry) {
+    return;
+  }
+
+  setFeedback("success", "提示一下", `下一个字母是 ${expected.toUpperCase()}。`);
+  chooseLetter(hintEntry.letter, hintEntry.index);
+}
+
+function clearSelectedLetters() {
+  if (!state.selectedLetters.length || state.letterSolved) {
+    return;
+  }
+
+  state.selectedLetters = [];
+  state.lastWrongSourceIndex = null;
+  state.readCompleted = false;
+  setFeedback("success", "重新拼", "可以重新点字母。");
+  renderGame();
+}
+
 function resetRound(message = "看大图，点正确的英文单词。") {
   state.solved = false;
   state.letterSolved = false;
   state.readCompleted = false;
   state.selectedLetters = [];
   state.letterBank = [];
+  state.letterMistakes = 0;
+  state.lastWrongSourceIndex = null;
   setFeedback("", "准备好了吗？", message);
   renderGame();
 }
@@ -1182,9 +1319,16 @@ els.letterBank.addEventListener("click", (event) => {
 });
 
 els.soundButton.addEventListener("click", () => speak(currentWord().word));
+els.voiceTestButton?.addEventListener("click", () => {
+  warmUpVoices();
+  speak("hello");
+  setFeedback("success", "声音测试", "如果听到 hello，说明当前设备可以播放声音。");
+});
 els.repeatButton.addEventListener("click", () => {
   teachRead(currentWord());
 });
+els.hintButton?.addEventListener("click", useLetterHint);
+els.clearLettersButton?.addEventListener("click", clearSelectedLetters);
 els.nextButton.addEventListener("click", nextRound);
 els.skipButton.addEventListener("click", skipRound);
 els.restartButton.addEventListener("click", restartGame);
@@ -1221,5 +1365,6 @@ document.addEventListener("keydown", (event) => {
 
 loadDisplaySettings();
 applyDisplaySettings();
+warmUpVoices();
 shuffleAllLevels();
 resetRound();

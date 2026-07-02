@@ -18,6 +18,7 @@
           <h1>英语单词大闯关</h1>
         </div>
         <div class="top-actions">
+          <button id="voiceTestButton" class="settings-button sound-test-button" type="button">声音测试</button>
           <button id="settingsButton" class="settings-button" type="button">显示设置</button>
           <div class="star-card" aria-label="星星数量">
             <span id="starCount" class="star-value">0</span>
@@ -68,6 +69,10 @@
           <p class="prompt-kicker">答对后再点字母拼一拼</p>
           <div id="letterSlots" class="letter-slots"></div>
           <div id="letterBank" class="letter-bank"></div>
+          <div class="letter-tools">
+            <button id="hintButton" class="secondary-button" type="button" disabled>提示</button>
+            <button id="clearLettersButton" class="secondary-button" type="button" disabled>重拼</button>
+          </div>
           <button id="repeatButton" class="repeat-button" type="button" disabled>拼完后声音教读</button>
         </div>
 
@@ -127,7 +132,7 @@
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          navigator.serviceWorker.register("sw.js");
+          navigator.serviceWorker.register("sw.js").then((registration) => registration.update());
         });
       }
     </script>

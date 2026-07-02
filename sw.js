@@ -1,4 +1,4 @@
-const CACHE_NAME = "word-adventure-v3";
+const CACHE_NAME = "word-adventure-v6";
 const APP_ASSETS = [
   "./",
   "./index.html",
@@ -33,19 +33,20 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
 
-      return fetch(event.request)
-        .then((response) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match("./index.html"));
-    }),
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html"))),
   );
 });
